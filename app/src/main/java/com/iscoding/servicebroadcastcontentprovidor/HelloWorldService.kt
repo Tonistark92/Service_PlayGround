@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
+import android.os.RemoteException
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 class HelloService : Service() {
     val MSG_SAY_HELLO = 9
+    val MSG_REPLY = 2
 
     private val binder = HelloBinder()
     private val serviceJob = Job()
@@ -45,15 +47,24 @@ class HelloService : Service() {
     }
 
     internal class IncomingHandler(
-        context: Context,
-        private val applicationContext: Context = context.applicationContext
+       val context: Context,
     ) : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             Log.d("ISLAM", "HANDLING THE MESSAGE")
             when (msg.what) {
-                MSG_SAY_HELLO ->
-                    Toast.makeText(applicationContext, "hello! from service", Toast.LENGTH_SHORT).show()
-                else -> super.handleMessage(msg)
+                MSG_SAY_HELLO -> {
+                    // Handle message from client
+                    Toast.makeText(context, "Hello from service!", Toast.LENGTH_SHORT).show()
+
+                    // Reply to client if needed
+                    val replyTo = msg.replyTo
+                    val replyMessage = Message.obtain(null, 2, 0, 0)
+                    try {
+                        replyTo.send(replyMessage)
+                    } catch (e: RemoteException) {
+                        e.printStackTrace()
+                    }
+                } else -> super.handleMessage(msg)
             }
         }
     }

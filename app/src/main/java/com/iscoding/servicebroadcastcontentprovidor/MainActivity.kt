@@ -9,7 +9,9 @@ import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.os.RemoteException
@@ -36,6 +38,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class MainActivity : ComponentActivity() {
     private lateinit var mService: HelloService
+    private val mMessenger = Messenger(IncomingHandler())
     //    private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,9 +84,10 @@ class MainActivity : ComponentActivity() {
                 // representation of that from the raw IBinder object.
                 myMessenger = Messenger(service)
                 // creaate and sen message with messenger
-                val msg: Message = Message.obtain(null, 9, 0, 0)
+                val message = Message.obtain(null, 9)
+                message.replyTo = mMessenger
                 try {
-                    myMessenger?.send(msg)
+                    myMessenger?.send(message)
                 } catch (e: RemoteException) {
                     e.printStackTrace()
                 }
@@ -123,6 +127,16 @@ class MainActivity : ComponentActivity() {
 
 
                 }
+            }
+        }
+    }
+    private inner class IncomingHandler : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            when (msg.what) {
+               2-> {
+                    Toast.makeText(applicationContext, "Reply from Activity to service deer serv i did received!", Toast.LENGTH_SHORT).show()
+                }
+                else -> super.handleMessage(msg)
             }
         }
     }
